@@ -14,7 +14,7 @@ namespace CryptoAPI.Data
         private string connectionString;
         public CryptoAPIContext ()
         {
-            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory());
+            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()); 
             builder.AddJsonFile("appsettings.json", optional: false);
             var configuration = builder.Build();
             connectionString = configuration.GetConnectionString("CryptoAPIContext").ToString();
