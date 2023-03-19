@@ -9,15 +9,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CryptoAPI.Data
 {
-    public class CryptoAPiContext : DbContext
+    public class CryptoAPIContext : DbContext
     {
         private string connectionString;
-        public CryptoAPiContext ()
+        public CryptoAPIContext ()
         {
             var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory());
             builder.AddJsonFile("appsettings.json", optional: false);
             var configuration = builder.Build();
-            connectionString = configuration.GetConnectionString("CryptoAPiContext").ToString();
+            connectionString = configuration.GetConnectionString("CryptoAPIContext").ToString();
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -32,9 +32,8 @@ namespace CryptoAPI.Data
             configurationBuilder.Properties<decimal>()
                 .HavePrecision(20, 10);
         }
-        ~CryptoAPiContext()
+        ~CryptoAPIContext()
         {
-            //Console.WriteLine($"CryptoAPiContext has deleted");
         }
     }
 }

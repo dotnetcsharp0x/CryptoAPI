@@ -27,7 +27,7 @@ namespace CryptoAPI.Exchanges
             //List<Crypto_Price> CryptoPricesList = new List<Crypto_Price>();
             try
             {
-                using (CryptoAPiContext _context = new CryptoAPiContext())
+                using (CryptoAPIContext _context = new CryptoAPIContext())
                 {
                     _context.Database.ExecuteSqlRaw("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;");
                     var CurrentPairsInDatabase = (from i in _context.Crypto_Price select i).ToArray();
@@ -85,7 +85,7 @@ namespace CryptoAPI.Exchanges
         {
             try
             {
-                using (CryptoAPiContext _context = new CryptoAPiContext())
+                using (CryptoAPIContext _context = new CryptoAPIContext())
                 {
                     Binance_symbols[] CryptoPairs;
                     Binance_symbols[] resp;
