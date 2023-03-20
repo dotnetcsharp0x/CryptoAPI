@@ -114,21 +114,12 @@ namespace CryptoAPI.Exchanges
                             }
                         }
                     }
-                    else
-                    {
-                        resp = null;
-                        cs = null;
-                    }
                     _context.SaveChanges();
-                    System.Threading.Thread.Sleep(1000);
-                    UpdatePairs();
                 }
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                System.Threading.Thread.Sleep(1000);
-                UpdatePairs();
 
             }
             finally
