@@ -1,7 +1,7 @@
 ﻿#nullable disable
 //using System.Data.Entity;
 
-using CryptoAPI.Models;
+using api.allinoneapi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
@@ -25,6 +25,7 @@ namespace CryptoAPI.Data
         }
         public DbSet<Crypto_Symbols> Crypto_Symbols { get; set; }
         public DbSet<Crypto_Price> Crypto_Price { get; set; }
+        public DbSet<Binance_CryptoKandles> CryptoKandles { get; set; }
 
         protected override void ConfigureConventions(
     ModelConfigurationBuilder configurationBuilder)

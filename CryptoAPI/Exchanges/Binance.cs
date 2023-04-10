@@ -3,19 +3,21 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using System.IO;
-using CryptoAPI.Models;
 using CryptoAPI.Data;
 using System.Diagnostics;
 using RestSharp;
 using System.Text.Json;
+using CryptoAPI.Migrations;
+using api.allinoneapi.Models;
 
 namespace CryptoAPI.Exchanges
 {
     public class Binance : IDisposable
     {
-        //string website = "https://localhost:7151";
+        string website = "https://localhost:7151";
+        //string website = "https://localhost:444";
         //string website = "http://46.22.247.253";
-        string website = "https://hungryapi.ru";
+        //string website = "https://hungryapi.ru";
         public Binance()
         {
         }
@@ -31,7 +33,7 @@ namespace CryptoAPI.Exchanges
                 {
                     _context.Database.ExecuteSqlRaw("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;");
                     var CurrentPairsInDatabase = (from i in _context.Crypto_Price select i).ToArray();
-                    string url = website + "/api/instruments/UpdateCurrentPrice";
+                    string url = website + "/api/Crypto/UpdateCurrentPrice";
                     var client = new RestClient(url);
                     var request = new RestRequest(url, Method.Get);
                     request.AddHeader("Content-Type", "application/json");
@@ -57,7 +59,6 @@ namespace CryptoAPI.Exchanges
                                 CryptoPrices.Price = a.price;
                                 CryptoPrices.DateTime = DateTime.Now;
                             }
-                            CryptoPrices.Dispose();
                         }
                         _context.SaveChanges();
                     }
@@ -69,7 +70,7 @@ namespace CryptoAPI.Exchanges
                     r = null;
                     _context.Dispose();
                 }
-                
+                Thread.Sleep(3000);
             }
             catch (Exception ex)
             {
@@ -80,6 +81,7 @@ namespace CryptoAPI.Exchanges
             }
         }
         #endregion
+
         #region UpdatePairs
         public void UpdatePairs()
         {
@@ -89,10 +91,10 @@ namespace CryptoAPI.Exchanges
                 {
                     Binance_symbols[] CryptoPairs;
                     Binance_symbols[] resp;
-                    List<Crypto_Symbols> cs = new List<Crypto_Symbols>();
+                    HashSet<Crypto_Symbols> cs = new HashSet<Crypto_Symbols>();
                     _context.Database.ExecuteSqlRaw("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;");
                     var CurrentPairsInDatabase = (from i in _context.Crypto_Symbols select i).ToArray();
-                    string url = website+"/api/instruments/UpdatePairs";
+                    string url = website+"/api/Crypto/UpdatePairs";
                     var client = new RestClient(url);
                     var request = new RestRequest(url, Method.Get);
                     request.AddHeader("Content-Type", "application/json");
@@ -128,6 +130,60 @@ namespace CryptoAPI.Exchanges
             }
         }
         #endregion
+
+        #region GetKandles
+        public void GetKandles()
+        {
+            try
+            {
+                using (CryptoAPIContext _context = new CryptoAPIContext())
+                {
+                    _context.Database.ExecuteSqlRaw("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;");
+                    var CurrentPairsInDatabase = (from i in _context.Crypto_Symbols select i).AsNoTracking().ToArray();
+                    int count = 0;
+                    foreach (var pair in CurrentPairsInDatabase)
+                    {
+                        count++;
+                        Console.WriteLine($"count: {count}, symbol: {pair.Symbol}");
+                        var CryptoKandlesData = new Binance_CryptoKandles();
+                        try
+                        {
+                            string url = website + "/api/Crypto/GetKandles?symbol=" + pair.Symbol;
+                            var client = new RestClient(url);
+                            var request = new RestRequest(url, Method.Get);
+                            request.AddHeader("Content-Type", "application/json");
+                            var r = client.ExecuteAsync(request).Result.Content;
+                            if (r != null)
+                            {
+                                CryptoKandlesData = JsonSerializer.Deserialize<Binance_CryptoKandles>(r);
+                                _context.Add(CryptoKandlesData);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+                        finally
+                        {
+                            
+                        }
+                    }
+                _context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+            }
+            finally
+            {
+
+            }
+        }
+        #endregion
+
+        #region Dispose
         ~Binance()
         {
             Console.WriteLine($"Binance distructor");
@@ -144,6 +200,6 @@ namespace CryptoAPI.Exchanges
                 Console.WriteLine($"Binance has been disposed");
             }
         }
-
+        #endregion
     }
 }

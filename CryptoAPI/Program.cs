@@ -5,7 +5,6 @@ namespace CryptoAPI
 {
     internal class Program
     {
-        //
         static void Main(string[] args)
         {
 
@@ -26,10 +25,27 @@ namespace CryptoAPI
                 }
                 else if (args[0] == "-binance" && args[1] == "-UpdatePairs")
                 {
+                    int currentDay = DateTime.Now.Day - 1; // Выполнение раз в сутки
+                    while (true)
+                    {
+                        if (currentDay != DateTime.Now.Day)
+                        {
+                            currentDay = DateTime.Now.Day;
+                            Binance bn = new Binance();
+                            bn.UpdatePairs();
+                            bn.Dispose();
+                            GC.Collect();
+                            GC.WaitForPendingFinalizers();
+
+                        }
+                    }
+                }
+                else if (args[0] == "-binance" && args[1] == "-GetKandles")
+                {
                     while (true)
                     {
                         Binance bn = new Binance();
-                        bn.UpdatePairs();
+                        bn.GetKandles();
                         bn.Dispose();
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
@@ -50,34 +66,20 @@ namespace CryptoAPI
             else
             {
                 Console.WriteLine("Without parameters!");
+                int currentDay = DateTime.Now.Minute-1; // Выполнение раз в минуту
                 while (true)
                 {
-                    Binance bn = new Binance();
-                    bn.UpdatePrices();
-                    bn.Dispose();
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-                }
-                //ConsoleKeyInfo keyInfo = Console.ReadKey(true);
-                //if (keyInfo.Key == ConsoleKey.Enter)
-                //{
-                //    Update();
-                //}
-            }
-            void Update()
-            {
-                Binance bn = new Binance();
-                bn.UpdatePrices();
-                bn.Dispose();
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                ConsoleKeyInfo keyInfo = Console.ReadKey(true);
-                if (keyInfo.Key == ConsoleKey.Enter)
-                {
-                    Update();
+                    if (currentDay != DateTime.Now.Minute)
+                    {
+                        currentDay = DateTime.Now.Minute;
+                        Binance bn = new Binance();
+                        bn.GetKandles();
+                        bn.Dispose();
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
+                    }
                 }
             }
         }
-
     }
 }
