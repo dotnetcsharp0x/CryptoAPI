@@ -2,6 +2,8 @@
 //using System.Data.Entity;
 
 using api.allinoneapi.Models;
+using api.allinoneapi.Models.Stocks.Polygon;
+using api.allinoneapi.Models.Stocks.Polygon.News;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
@@ -26,6 +28,10 @@ namespace CryptoAPI.Data
         public DbSet<Crypto_Symbols> Crypto_Symbols { get; set; }
         public DbSet<Crypto_Price> Crypto_Price { get; set; }
         public DbSet<Binance_CryptoKandles> CryptoKandles { get; set; }
+        public DbSet<StockInstruments> StockInstruments { get; set; }
+        public DbSet<StockDescription> StockDescription { get; set; }
+        public DbSet<InstrumentsNews> InstrumentsNews { get; set; }
+        public DbSet<TickerToNews> TickerToNews { get; set; }
 
         protected override void ConfigureConventions(
     ModelConfigurationBuilder configurationBuilder)

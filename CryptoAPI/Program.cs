@@ -1,85 +1,259 @@
 ﻿using CryptoAPI.Exchanges;
+using CryptoAPI.Stocks.Polygon;
 using Microsoft.EntityFrameworkCore.Update.Internal;
+using System.Xml;
+using System.Threading;
+using CryptoAPI.Tinkoff;
+using CryptoAPI.Polygon;
+using CryptoAPI.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CryptoAPI
 {
     internal class Program
     {
+        private static string api = "&apiKey=";
         static void Main(string[] args)
         {
-
-            if (args.Length > 0)
+            XmlDocument xApi = new XmlDocument();
+            xApi.Load("api.xml");
+            XmlElement? xRootApi = xApi.DocumentElement;
+            if (xRootApi != null)
             {
-                Console.WriteLine($"The app started with next parameters:");
-                Console.WriteLine($"Exchange: {args[0]}, method: {args[1]}");
-                if (args[0] == "-binance" && args[1] == "-UpdatePrices")
+                foreach (XmlElement xnode in xRootApi)
                 {
-                    while (true)
-                    {
-                        Binance bn = new Binance();
-                        bn.UpdatePrices();
-                        bn.Dispose();
-                        GC.Collect();
-                        GC.WaitForPendingFinalizers();
-                    }
-                }
-                else if (args[0] == "-binance" && args[1] == "-UpdatePairs")
-                {
-                    int currentDay = DateTime.Now.Day - 1; // Выполнение раз в сутки
-                    while (true)
-                    {
-                        if (currentDay != DateTime.Now.Day)
-                        {
-                            currentDay = DateTime.Now.Day;
-                            Binance bn = new Binance();
-                            bn.UpdatePairs();
-                            bn.Dispose();
-                            GC.Collect();
-                            GC.WaitForPendingFinalizers();
-
-                        }
-                    }
-                }
-                else if (args[0] == "-binance" && args[1] == "-GetKandles")
-                {
-                    while (true)
-                    {
-                        Binance bn = new Binance();
-                        bn.GetKandles();
-                        bn.Dispose();
-                        GC.Collect();
-                        GC.WaitForPendingFinalizers();
-                    }
-                }
-                else if (args[0] == "okex" || args[1] == "-UpdatePrices")
-                {
-                    Console.WriteLine("Okex");
-                    Console.ReadKey();
-                }
-                else
-                {
-                    Console.WriteLine("Missing right parameter!");
-                    Console.WriteLine("Press any key to close the app!");
-                    Console.ReadKey();
+                    api = api + xnode.ChildNodes[1].InnerText;
                 }
             }
-            else
+            Thread BinanceUpdatePricesThread = new Thread(BinanceUpdatePrices);
+            Thread BinanceUpdatePairsThread = new Thread(BinanceUpdatePairs);
+            Thread BinanceUpdateKandlesThread = new Thread(BinanceUpdateKandles);
+            Thread TinkoffUpdateBonds = new Thread(TinkoffUpdateBondsService);
+            Thread TinkoffUpdateEtfs = new Thread(TinkoffUpdateEtfsService);
+            Thread TinkoffUpdateStocks = new Thread(TinkoffUpdateStocksService);
+            Thread UpdateStockInstrument = new Thread(UpdateStockInstruments);
+            Thread UpdateStockInstrumentDescriptions = new Thread(UpdateStockInstrumentsDescription);
+            Thread GetNews = new Thread(UpdateNews);
+            Thread Test = new Thread(TestNew);
+            XmlDocument xDoc = new XmlDocument();
+            
+            xDoc.Load("settings.xml");
+
+            XmlElement? xRoot = xDoc.DocumentElement;
+            if (xRoot != null)
             {
-                Console.WriteLine("Without parameters!");
-                int currentDay = DateTime.Now.Minute-1; // Выполнение раз в минуту
-                while (true)
+                foreach (XmlElement xnode in xRoot)
                 {
-                    if (currentDay != DateTime.Now.Minute)
+                    XmlNode? attr = xnode.Attributes.GetNamedItem("crypto");
+                    Console.WriteLine(attr?.Value);
+
+                    #region XML_PARAMS
+
+                    if (xnode.ChildNodes[0].InnerText == "binance" && xnode.ChildNodes[1].InnerText == "UpdatePrices")
                     {
-                        currentDay = DateTime.Now.Minute;
-                        Binance bn = new Binance();
-                        bn.GetKandles();
-                        bn.Dispose();
-                        GC.Collect();
-                        GC.WaitForPendingFinalizers();
+                        BinanceUpdatePricesThread.Start();
                     }
+                    if (xnode.ChildNodes[0].InnerText == "polygon" && xnode.ChildNodes[1].InnerText == "UpdateKandles")
+                    {
+                        BinanceUpdateKandlesThread.Start();
+                    }
+                    if (xnode.ChildNodes[0].InnerText == "Tinkoff" && xnode.ChildNodes[1].InnerText == "UpdateBonds")
+                    {
+                        TinkoffUpdateBonds.Start();
+                    }
+                    if (xnode.ChildNodes[0].InnerText == "Tinkoff" && xnode.ChildNodes[1].InnerText == "UpdateEtfs")
+                    {
+                        TinkoffUpdateEtfs.Start();
+                    }
+                    if (xnode.ChildNodes[0].InnerText == "Tinkoff" && xnode.ChildNodes[1].InnerText == "UpdateStocks")
+                    {
+                        TinkoffUpdateStocks.Start();
+                    }
+                    if (xnode.ChildNodes[0].InnerText == "polygon" && xnode.ChildNodes[1].InnerText == "UpdateInstruments")
+                    {
+                        UpdateStockInstrument.Start();
+                    }
+                    if (xnode.ChildNodes[0].InnerText == "polygon" && xnode.ChildNodes[1].InnerText == "UpdateInstrumentsDescription")
+                    {
+                        UpdateStockInstrumentDescriptions.Start();
+                    }
+                    if (xnode.ChildNodes[0].InnerText == "polygon" && xnode.ChildNodes[1].InnerText == "GetNews")
+                    {
+                        GetNews.Start();
+                    }
+                    if (xnode.ChildNodes[0].InnerText == "binance" && xnode.ChildNodes[1].InnerText == "UpdateInstruments")
+                    {
+                        BinanceUpdatePairsThread.Start();
+                    }
+                    #endregion
+
                 }
             }
         }
+
+        #region BinanceUpdateKandles
+        private static void BinanceUpdateKandles(object? obj)
+        {
+            while (true)
+            {
+                Stock st = new Stock();
+                st.GetKandles();
+                st.Dispose();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                Thread.Sleep(300000);
+            }
+        }
+        #endregion
+
+        #region UpdateStockInstruments
+        private static void UpdateStockInstruments(object? obj)
+        {
+            string first_page = "https://api.polygon.io/v3/reference/tickers?active=true&limit=1000";
+            string url = "";
+            while (true)
+            {
+                Poly st = new Poly();
+                if (url.Length == 0)
+                {
+                    url = st.GetInstruments(first_page + api);
+                }
+                else
+                {
+                    url = st.GetInstruments(url);
+                }
+                st.Dispose();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                //Thread.Sleep(300000);
+            }
+        }
+        #endregion
+
+        #region TinkoffUpdateBondsService
+        private static void TinkoffUpdateBondsService(object? obj)
+        {
+            while (true)
+            {
+                TinkoffData st = new TinkoffData();
+                st.UpdateBonds();
+                st.Dispose();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                Thread.Sleep(86400000);
+            }
+        }
+        #endregion
+
+        #region TinkoffUpdateStocksService
+        private static void TinkoffUpdateStocksService(object? obj)
+        {
+            while (true)
+            {
+                TinkoffData st = new TinkoffData();
+                st.UpdateStocks();
+                st.Dispose();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                Thread.Sleep(86400000);
+            }
+        }
+        #endregion
+
+        #region UpdateNews
+        private static void UpdateNews(object? obj)
+        {
+            while (true)
+            {
+                Stock st = new Stock();
+                st.GetNews();
+                st.Dispose();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                Thread.Sleep(300000);
+            }
+        }
+        #endregion
+
+        #region TinkoffUpdateEtfsService
+        private static void TinkoffUpdateEtfsService(object? obj)
+        {
+            while (true)
+            {
+                TinkoffData st = new TinkoffData();
+                st.UpdateEtfs();
+                st.Dispose();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                Thread.Sleep(86400000);
+            }
+        }
+        #endregion
+
+        #region UpdateStockInstrumentsDescription
+        private static void UpdateStockInstrumentsDescription(object? obj)
+        {
+            while (true)
+            {
+                Poly st = new Poly();
+                using (CryptoAPIContext _context = new CryptoAPIContext())
+                {
+                    var tickers = (from i in _context.StockInstruments 
+                                   where !(from o in _context.StockDescription select o.ticker).Contains(i.ticker)
+                                   select i).AsNoTracking().ToHashSet();
+                    foreach (var t in tickers)
+                    {
+                        Console.WriteLine("Ищу: " + t.ticker);
+                        st.UpdateStockDescription(t.ticker);
+                        st.Dispose();
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
+                    }
+                }
+                Thread.Sleep(86400000);
+            }
+        }
+        #endregion
+
+        #region BinanceUpdatePrices
+        private static void BinanceUpdatePrices(object? obj)
+        {
+            while (true)
+            {
+                Binance bn = new Binance();
+                bn.UpdatePrices();
+                bn.Dispose();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
+        }
+        #endregion
+
+        #region BinanceUpdatePairs
+        private static void BinanceUpdatePairs(object? obj)
+        {
+            while (true)
+            {
+                Binance bn = new Binance();
+                bn.UpdatePairs();
+                bn.Dispose();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                Thread.Sleep(86400000);
+            }
+        }
+        #endregion
+
+        #region Test
+        private static void TestNew(object? obj)
+        {
+            while (true)
+            {
+                Console.WriteLine("TEST");
+                Thread.Sleep(1000);
+            }
+        }
+        #endregion
+
     }
 }
