@@ -34,7 +34,7 @@ namespace CryptoAPI
             Thread UpdateStockInstrument = new Thread(UpdateStockInstruments);
             Thread UpdateStockInstrumentDescriptions = new Thread(UpdateStockInstrumentsDescription);
             Thread GetNews = new Thread(UpdateNews);
-            Thread Test = new Thread(TestNew);
+            //Thread Test = new Thread(TestNew);
             XmlDocument xDoc = new XmlDocument();
             
             xDoc.Load("settings.xml");
@@ -244,16 +244,16 @@ namespace CryptoAPI
         }
         #endregion
 
-        #region Test
-        private static void TestNew(object? obj)
-        {
-            while (true)
-            {
-                Console.WriteLine("TEST");
-                Thread.Sleep(1000);
-            }
-        }
-        #endregion
+        //#region Test
+        //private static void TestNew(object? obj)
+        //{
+        //    while (true)
+        //    {
+        //        Console.WriteLine("TEST");
+        //        Thread.Sleep(1000);
+        //    }
+        //}
+        //#endregion
 
     }
 }

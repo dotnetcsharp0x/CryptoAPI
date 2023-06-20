@@ -64,7 +64,7 @@ namespace CryptoAPI.Stocks.Polygon
                     }
                     _context.SaveChanges();
                 }
-
+                Content.Dispose();
                 return poly_tickers.next_url + api;
             }
             catch (Exception e)
@@ -142,6 +142,7 @@ namespace CryptoAPI.Stocks.Polygon
 
                     await _context.SaveChangesAsync();
                 }
+                Content.Dispose();
             }
             catch (Exception e)
             {

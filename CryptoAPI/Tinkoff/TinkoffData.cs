@@ -54,6 +54,7 @@ namespace CryptoAPI.Tinkoff
                     }
                     _context.SaveChanges();
                 }
+                Content.Dispose();
             }
             catch (Exception ex)
             {
@@ -105,6 +106,7 @@ namespace CryptoAPI.Tinkoff
                     }
                     _context.SaveChanges();
                 }
+                Content.Dispose();
             }
             catch (Exception ex)
             {
@@ -156,6 +158,7 @@ namespace CryptoAPI.Tinkoff
                     }
                     _context.SaveChanges();
                 }
+                Content.Dispose();
             }
             catch (Exception ex)
             {
