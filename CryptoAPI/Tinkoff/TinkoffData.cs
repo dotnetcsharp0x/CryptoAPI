@@ -15,6 +15,7 @@ namespace CryptoAPI.Tinkoff
 {
     public class TinkoffData : IDisposable
     {
+
         #region UpdateStocks
         public void UpdateStocks()
         {

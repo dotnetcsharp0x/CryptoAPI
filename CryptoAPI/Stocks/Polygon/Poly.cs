@@ -18,11 +18,22 @@ namespace CryptoAPI.Stocks.Polygon
     public class Poly : IDisposable
     {
         string url_from = "https://localhost:443/api/Stock/GetInstruments";
-        private static string api = "&apiKey=1IDknqV7XjsFhZRNtwdNcJOtPp9IH0Ji";
+        private static string api = "&apiKey=";
         //private string website = "https://hungryapi.ru";
         //private string website = "https://localhost:7151";
         private string website = "https://localhost:443";
-        public Poly() { }
+        public Poly() {
+            XmlDocument xApi = new XmlDocument();
+            xApi.Load("api.xml");
+            XmlElement? xRootApi = xApi.DocumentElement;
+            if (xRootApi != null)
+            {
+                foreach (XmlElement xnode in xRootApi)
+                {
+                    api = api + xnode.ChildNodes[1].InnerText;
+                }
+            }
+        }
 
         #region GetInstruments
         public string GetInstruments(string url_get)
