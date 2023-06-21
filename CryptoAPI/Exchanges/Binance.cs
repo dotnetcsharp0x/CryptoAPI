@@ -241,6 +241,7 @@ namespace CryptoAPI.Exchanges
                     }
                     catch (Exception ex)
                     {
+                        client.Dispose();
                         //Console.WriteLine(ex.ToString());
                     }
                 }
@@ -294,6 +295,7 @@ namespace CryptoAPI.Exchanges
                                     
                                 }
                             }
+                            client.Dispose();
                             //Thread.Sleep(700);
                         }
                         catch (Exception ex)

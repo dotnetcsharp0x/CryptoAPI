@@ -33,6 +33,7 @@ namespace CryptoAPI
             Thread TinkoffUpdateStocks = new Thread(TinkoffUpdateStocksService);
             Thread UpdateStockInstrument = new Thread(UpdateStockInstruments);
             Thread UpdateDividendsThread = new Thread(UpdateDividendInstruments);
+            Thread UpdateDividendsTinkoffThread = new Thread(UpdateDividendTinkoffInstruments);
             Thread UpdateStockInstrumentDescriptions = new Thread(UpdateStockInstrumentsDescription);
             Thread GetNews = new Thread(UpdateNews);
             //Thread Test = new Thread(TestNew);
@@ -90,6 +91,10 @@ namespace CryptoAPI
                     {
                         UpdateDividendsThread.Start();
                     }
+                    if (xnode.ChildNodes[0].InnerText == "Tinkoff" && xnode.ChildNodes[1].InnerText == "UpdateDividendTinkoffInstruments")
+                    {
+                        UpdateDividendsTinkoffThread.Start();
+                    }
                     #endregion
 
                 }
@@ -131,6 +136,21 @@ namespace CryptoAPI
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 //Thread.Sleep(300000);
+            }
+        }
+        #endregion
+
+        #region UpdateDividendTinkoffInstruments
+        private static void UpdateDividendTinkoffInstruments(object? obj)
+        {
+            while (true)
+            {
+                Poly st = new Poly();
+                st.GetDividendsTinkoff();
+                st.Dispose();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                Thread.Sleep(86400000);
             }
         }
         #endregion

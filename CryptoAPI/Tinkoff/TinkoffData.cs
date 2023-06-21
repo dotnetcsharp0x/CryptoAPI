@@ -172,6 +172,58 @@ namespace CryptoAPI.Tinkoff
 
         #endregion
 
+        #region Test
+        public void Test()
+        {
+            try
+            {
+                var url = "https://hungryapi.ru/api/Stock/GetInstruments/Bonds";
+                var client = new RestClient(url);
+                var request = new RestRequest(url, Method.Get);
+                request.AddHeader("Content-Type", "application/json");
+                var r = client.ExecuteAsync(request).Result.Content;
+
+                var Content = new StringContent(r.ToString(), Encoding.UTF8, "application/json");
+                JavaScriptSerializer? js = new JavaScriptSerializer();
+                var poly_tickers = js.Deserialize<List<TinkoffMain>>(r);
+                using (CryptoAPIContext _context = new CryptoAPIContext())
+                {
+                    var tickers = (from i in _context.StockInstruments select i).AsNoTracking();
+                    foreach (var tick in poly_tickers)
+                    {
+                        var find_ticker_in_database = (from i in tickers where i.ticker == tick.classCode && i.name == tick.name select i).FirstOrDefault();
+                        if (find_ticker_in_database == null)
+                        {
+                            StockInstruments stock = new StockInstruments();
+                            stock.market = "stocks";
+                            stock.name = tick.name;
+                            stock.ticker = tick.classCode;
+                            stock.currency_name = tick.currency;
+                            stock.active = true;
+                            stock.type = "WARRANT";
+                            stock.composite_figi = tick.figi;
+                            stock.share_class_figi = tick.isin;
+                            stock.locale = tick.countryOfRisk;
+                            stock.update_date = DateTime.Now;
+                            _context.Add(stock);
+                            Console.WriteLine("Добавлен тикер:" + tick.ticker + " , name: " + tick.name);
+                        }
+                    }
+                    _context.SaveChanges();
+                }
+                Content.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+
+            }
+            finally { }
+
+        }
+
+        #endregion
+
         #region DisposeCtor
         public void Dispose()
         {

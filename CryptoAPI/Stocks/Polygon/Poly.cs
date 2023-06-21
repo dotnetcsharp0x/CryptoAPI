@@ -2,6 +2,7 @@
 using api.allinoneapi.Models.Stocks.Polygon;
 using api.allinoneapi.Models.Stocks.Polygon.Dividends;
 using api.allinoneapi.Models.Stocks.Polygon.News;
+using api.allinoneapi.Models.Stocks.Tinkoff;
 using CryptoAPI.Data;
 using CryptoAPI.Polygon;
 using Microsoft.EntityFrameworkCore;
@@ -37,11 +38,83 @@ namespace CryptoAPI.Stocks.Polygon
             }
         }
 
+        #region GetDividendsTinkoff
+        public async Task<string> GetDividendsTinkoff()
+        {
+            var url = website + "/api/Stock/GetInstruments/Stocks";
+            var client = new RestClient(url);
+            var request = new RestRequest(url, Method.Get);
+            request.AddHeader("Content-Type", "application/json");
+            var r = client.ExecuteAsync(request).Result.Content;
+
+            var Content = new StringContent(r.ToString(), Encoding.UTF8, "application/json");
+            JavaScriptSerializer? js = new JavaScriptSerializer();
+            var poly_tickers = js.Deserialize<List<TinkoffMain>>(r);
+            
+            
+            using (CryptoAPIContext _context = new CryptoAPIContext())
+            {
+                foreach (var i in poly_tickers)
+                {
+                    //var current_in_database = (from n in _context.StockDividends where n.ticker == i.ticker select n).AsNoTracking().ToList();
+                    
+                    var url_dividend = website + "/api/Stock/GetInstruments/GetDividends?figi=" +
+                        i.figi +
+                        "&dateFrom=" +
+                        DateTime.Now.AddYears(-20) +
+                        "&dateTo=" +
+                        DateTime.Now +
+                        "";
+                    var client_dividend = new RestClient(url_dividend);
+                    var request_dividend = new RestRequest(url_dividend, Method.Get);
+                    request_dividend.AddHeader("Content-Type", "application/json");
+                    var r_dividend = client_dividend.ExecuteAsync(request_dividend).Result.Content;
+
+                    var Content_dividend = new StringContent(r_dividend.ToString(), Encoding.UTF8, "application/json");
+                    JavaScriptSerializer? js_dividend = new JavaScriptSerializer();
+                    var poly_tickers_dividend = js_dividend.Deserialize<api.allinoneapi.Models.Tinkoff.Dividends.Dividends>(r_dividend);
+                    List<api.allinoneapi.Models.Stocks.Polygon.Dividends.Result> divs = new List<api.allinoneapi.Models.Stocks.Polygon.Dividends.Result>();
+                    foreach (var d in poly_tickers_dividend.dividends) {
+                        var pay_date = d.paymentDate.ToString("yyy-MM-dd");
+                        Console.WriteLine("Смотрю: " + i.figi + ", с датой: " + pay_date);
+                        var current_in_database = (from n in _context.StockDividends where n.ticker == i.ticker && n.pay_date == pay_date select n).AsNoTracking().ToList();
+                        if(current_in_database.Count() == 0)
+                        {
+                            api.allinoneapi.Models.Stocks.Polygon.Dividends.Result div = new api.allinoneapi.Models.Stocks.Polygon.Dividends.Result();
+                            div.cash_amount = Convert.ToDouble(d.dividendNet.units +"."+ Convert.ToString(d.dividendNet.nano));
+                            div.currency = d.dividendNet.currency;
+                            div.declaration_date = d.declaredDate.ToString("yyyy-MM-dd");
+                            div.dividend_type = d.dividendType;
+                            div.ex_dividend_date = d.lastBuyDate.ToString("yyyy-MM-dd");
+                            div.frequency = 1;
+                            div.pay_date = d.paymentDate.ToString("yyyy-MM-dd");
+                            div.record_date = d.recordDate.ToString("yyyy-MM-dd");
+                            div.ticker = i.ticker;
+                            div.update_date = DateTime.Now;
+                            divs.Add(div);
+                        }
+                    }
+                    client_dividend.Dispose();
+                    Content_dividend.Dispose();
+
+                    await _context.BulkMergeAsync(divs);
+                    await _context.BulkSaveChangesAsync();
+                    Thread.Sleep(1000);
+                }
+            }
+            client.Dispose();
+            Content.Dispose();
+            return "1";
+        }
+        #endregion
+
+
         #region GetDividends
         public string GetDividends(string url_get)
         {
             try
             {
+                Console.WriteLine(url_get);
                 var url = url_get;
                 var client = new RestClient(url);
                 var request = new RestRequest(url, Method.Get);
@@ -136,12 +209,13 @@ namespace CryptoAPI.Stocks.Polygon
                     _context.SaveChanges();
                 }
                 Content.Dispose();
+                client.Dispose();
                 return poly_tickers.next_url + api;
             }
             catch (Exception e)
             {
-                Thread.Sleep(86400000);
                 Console.WriteLine(e.Message.ToString());
+                Thread.Sleep(86400000);
                 return "";
             }
             finally
@@ -214,6 +288,7 @@ namespace CryptoAPI.Stocks.Polygon
                     await _context.SaveChangesAsync();
                 }
                 Content.Dispose();
+                client.Dispose();
             }
             catch (Exception e)
             {

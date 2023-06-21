@@ -86,6 +86,7 @@ namespace CryptoAPI.Polygon
                             await _context.BulkSaveChangesAsync();
                             Console.WriteLine("Stock price updated!");
                         }
+                        client.Dispose();
                         //Thread.Sleep(300000);
                     }
                     catch (Exception ex)
@@ -220,6 +221,7 @@ namespace CryptoAPI.Polygon
                             await _context.BulkSaveChangesAsync();
                             Console.WriteLine("News updated!");
                         }
+                        client.Dispose();
                         //Thread.Sleep(300000);
                     }
                     catch (Exception ex)
