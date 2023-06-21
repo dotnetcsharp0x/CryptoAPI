@@ -1,5 +1,7 @@
 ﻿using api.allinoneapi.Models;
 using api.allinoneapi.Models.Stocks.Polygon;
+using api.allinoneapi.Models.Stocks.Polygon.Dividends;
+using api.allinoneapi.Models.Stocks.Polygon.News;
 using CryptoAPI.Data;
 using CryptoAPI.Polygon;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +20,7 @@ namespace CryptoAPI.Stocks.Polygon
     public class Poly : IDisposable
     {
         string url_from = "https://localhost:443/api/Stock/GetInstruments";
-        private static string api = "&apiKey=";
+        private static string api = "";
         //private string website = "https://hungryapi.ru";
         //private string website = "https://localhost:7151";
         private string website = "https://localhost:443";
@@ -30,10 +32,68 @@ namespace CryptoAPI.Stocks.Polygon
             {
                 foreach (XmlElement xnode in xRootApi)
                 {
-                    api = api + xnode.ChildNodes[1].InnerText;
+                    api = "&apiKey=" + xnode.ChildNodes[1].InnerText;
                 }
             }
         }
+
+        #region GetDividends
+        public string GetDividends(string url_get)
+        {
+            try
+            {
+                var url = url_get;
+                var client = new RestClient(url);
+                var request = new RestRequest(url, Method.Get);
+                request.AddHeader("Content-Type", "application/json");
+                var r = client.ExecuteAsync(request).Result.Content;
+
+                var Content = new StringContent(r.ToString(), Encoding.UTF8, "application/json");
+                JavaScriptSerializer? js = new JavaScriptSerializer();
+                var poly_tickers = js.Deserialize<Dividends>(r);
+                using (CryptoAPIContext _context = new CryptoAPIContext())
+                {
+                    var tickers = (from i in _context.StockDividends select i).AsNoTracking().ToList();
+                    foreach (var tick in poly_tickers.results)
+                    {
+                        var find_ticker_in_database = (from i in tickers where i.ticker == tick.ticker && i.pay_date == tick.pay_date select i).FirstOrDefault();
+                        if (find_ticker_in_database == null)
+                        {
+                            api.allinoneapi.Models.Stocks.Polygon.Dividends.Result stock = new api.allinoneapi.Models.Stocks.Polygon.Dividends.Result();
+                            stock.cash_amount = tick.cash_amount;
+                            stock.currency = tick.currency;
+                            stock.declaration_date = tick.declaration_date;
+                            stock.dividend_type = tick.dividend_type;
+                            stock.ex_dividend_date = tick.ex_dividend_date;
+                            stock.frequency = tick.frequency;
+                            stock.pay_date = tick.pay_date;
+                            stock.record_date = tick.record_date;
+                            stock.ticker = tick.ticker;
+                            stock.update_date = DateTime.Now;
+                            tickers.Add(stock);
+
+                            Console.WriteLine("Добавлен тикер:" + tick.ticker + " , pay_date: " + tick.pay_date);
+                        }
+                    }
+                    _context.BulkMerge(tickers);
+                    _context.BulkSaveChanges();
+                }
+                Content.Dispose();
+                client.Dispose();
+                return poly_tickers.next_url + api;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message.ToString());
+                Thread.Sleep(86400000);
+                return "";
+            }
+            finally
+            {
+
+            }
+        }
+        #endregion
 
         #region GetInstruments
         public string GetInstruments(string url_get)

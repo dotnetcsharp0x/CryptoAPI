@@ -32,6 +32,7 @@ namespace CryptoAPI
             Thread TinkoffUpdateEtfs = new Thread(TinkoffUpdateEtfsService);
             Thread TinkoffUpdateStocks = new Thread(TinkoffUpdateStocksService);
             Thread UpdateStockInstrument = new Thread(UpdateStockInstruments);
+            Thread UpdateDividendsThread = new Thread(UpdateDividendInstruments);
             Thread UpdateStockInstrumentDescriptions = new Thread(UpdateStockInstrumentsDescription);
             Thread GetNews = new Thread(UpdateNews);
             //Thread Test = new Thread(TestNew);
@@ -85,6 +86,10 @@ namespace CryptoAPI
                     {
                         BinanceUpdatePairsThread.Start();
                     }
+                    if (xnode.ChildNodes[0].InnerText == "polygon" && xnode.ChildNodes[1].InnerText == "UpdateDividends")
+                    {
+                        UpdateDividendsThread.Start();
+                    }
                     #endregion
 
                 }
@@ -102,6 +107,30 @@ namespace CryptoAPI
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 Thread.Sleep(300000);
+            }
+        }
+        #endregion
+
+        #region UpdateDividendInstruments
+        private static void UpdateDividendInstruments(object? obj)
+        {
+            string first_page = "https://api.polygon.io/v3/reference/dividends?limit=1000";
+            string url = "";
+            while (true)
+            {
+                Poly st = new Poly();
+                if (url.Length == 0)
+                {
+                    url = st.GetDividends(first_page + api);
+                }
+                else
+                {
+                    url = st.GetDividends(url);
+                }
+                st.Dispose();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                //Thread.Sleep(300000);
             }
         }
         #endregion

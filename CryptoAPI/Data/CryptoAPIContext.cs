@@ -32,6 +32,7 @@ namespace CryptoAPI.Data
         public DbSet<StockDescription> StockDescription { get; set; }
         public DbSet<InstrumentsNews> InstrumentsNews { get; set; }
         public DbSet<TickerToNews> TickerToNews { get; set; }
+        public DbSet<api.allinoneapi.Models.Stocks.Polygon.Dividends.Result> StockDividends { get; set; }
 
         protected override void ConfigureConventions(
     ModelConfigurationBuilder configurationBuilder)

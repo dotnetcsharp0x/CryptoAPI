@@ -122,10 +122,7 @@ namespace CryptoAPI.Exchanges
                     var request = new RestRequest(url, Method.Get);
                     request.AddHeader("Content-Type", "application/json");
                     var r = client.ExecuteAsync(request).Result.Content;
-                    var alreadyindatabase = (from s in _context.Crypto_Symbols select new Crypto_Symbols()
-                    {
-                        Symbol=s.Symbol
-                    }).AsNoTracking().ToList();
+                    cs = (from s in _context.Crypto_Symbols select s).AsNoTracking().ToHashSet();
                     if (r is not null)
                     {
                         CryptoPairs = JsonSerializer.Deserialize<Binance_symbols[]>(r);
@@ -135,14 +132,18 @@ namespace CryptoAPI.Exchanges
 
                             foreach (var i in CryptoPairs)
                             {
-                                var find_in_database = (from d in alreadyindatabase
+                                var find_in_database = (from d in cs
 
                                                         where d.Symbol.Equals(i.symbol)
                                                         select d).FirstOrDefault();
 
                                 if (find_in_database != null)
                                 {
-                                    foreach (var p in alreadyindatabase.Where(r => r.Symbol == i.symbol))
+                                    if(i.symbol=="BTC")
+                                    {
+                                        Console.WriteLine(i.symbol);
+                                    }
+                                    foreach (var p in cs.Where(r => r.Symbol == i.symbol))
                                     {
                                         if (i.circulating_supply < 1000000000)
                                         {
